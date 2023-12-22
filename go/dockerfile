@@ -1,0 +1,16 @@
+FROM golang:latest
+
+# ENV http_proxy="http://10.1.1.15:8080"
+# ENV https_proxy="http://10.1.1.15:8080"
+
+COPY  /go/src/go.mod /app/
+COPY /go/src/go.sum /app/
+
+WORKDIR /app/
+
+# RUN go get github.com/jinzhu/gorm
+# RUN go get gorm.io/driver/mysql
+# RUN go get gorm.io/gorm
+
+
+RUN go mod tidy

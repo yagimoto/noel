@@ -1,0 +1,258 @@
+package main
+
+import (
+	"log"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+)
+
+var db *gorm.DB
+
+type menus struct {
+	ID   uint
+	NAME string
+}
+
+func Connect(count int) *gorm.DB {
+	user := "root"
+	pass := "pass"
+	progocol := "tcp(hackdenoel-mysql:3306)"
+	dbname := "noel-db"
+	connect := user + ":" + pass + "@" + progocol + "/" + dbname
+	db, err := gorm.Open(mysql.Open(connect), &gorm.Config{})
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return db
+}
+
+func main() {
+	var users menus
+	db := Connect(100)
+	router := gin.Default()
+
+	log.Printf("ID: %d, Name: %s", users.ID, users.NAME)
+
+	router.GET("/", func(ctx *gin.Context) {
+		result := db.Find(&users)
+
+		if result.Error != nil {
+			ctx.JSON(401, gin.H{"eroor": "エラーです"})
+		}
+
+		ctx.JSON(200, gin.H{
+			"ID":   users.ID,
+			"NAME": users.NAME,
+		})
+	})
+
+	router.Run(":8080")
+}
+
+/*
+func DBMigrate(db *gorm.DB) *gorm.DB {
+    db.AutoMigrate(&menus{})
+    return db
+}*/
+//DBMigrate(db)
+
+
+
+
+
+//ver2
+
+
+
+
+
+
+package main
+
+import (
+	"log"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+)
+
+var db *gorm.DB
+
+type menus struct {
+	ID   uint
+	NAME string
+}
+
+func Connect(users *[]menus, count int) {
+	user := "root"
+	pass := "pass"
+	progocol := "tcp(hackdenoel-mysql:3306)"
+	dbname := "noel-db"
+	connect := user + ":" + pass + "@" + progocol + "/" + dbname
+	db, err := gorm.Open(mysql.Open(connect), &gorm.Config{})
+
+	if err != nil {
+		//log.Fatal("Server Run Failed.: ", err)
+		if count > 1 {
+			time.Sleep(time.Second * 2)
+			count--
+			log.Println("retry...")
+			// log.Printf("ID: %d, Name: %s", users.ID, users.NAME)
+			Connect(users, count)
+		}
+	}
+
+	db.Find(&users)
+}
+
+func main() {
+	var users []menus
+	Connect(&users, 100)
+	router := gin.Default()
+
+	// log.Printf("ID: %d, Name: %s", users.ID, users.NAME)
+
+	router.GET("/", func(ctx *gin.Context) {
+
+		ctx.JSON(200, gin.H{
+			"ID":    users[0].ID,
+			"NAME":  users[0].NAME,
+			"ID1":   users[1].ID,
+			"NAME1": users[1].NAME,
+		})
+
+	})
+
+	router.Run(":8080")
+}
+
+/*
+func DBMigrate(db *gorm.DB) *gorm.DB {
+    db.AutoMigrate(&menus{})
+    return db
+}*/
+//DBMigrate(db)
+
+
+
+
+//model.go
+
+// func GetUserID(userInput *User) (int, error) {
+// 	// ユーザーネームとパスワードからユーザーIDを取得
+// }
+
+//GetUserIDはmain.goにない
+
+
+main.go //leatest
+
+// package main
+
+// import (
+// 	"log"
+// 	"src/model"
+
+// 	"github.com/gin-gonic/gin"
+// 	"gorm.io/gorm"
+// )
+
+// var db *gorm.DB
+
+// type Scores struct {
+// 	ScoreID int `json:"score_id"`
+// 	Score   int `json:"score"`
+// 	UserID  int `json:"user_id"`
+// }
+
+// type Ranking struct {
+// 	Scores []Scores
+// }
+
+// type User struct {
+// 	UserID   int    `json:"user_id"`
+// 	UserName string `json:"user_name"`
+// 	Password string `json:"password"`
+// }
+
+// func main() {
+// 	router := gin.Default()
+
+// 	router.GET("/login", login)
+// 	router.GET("/logout", logout)
+// 	router.GET("/sign-up", signUp)
+// 	router.GET("/ranking", showRanking)
+// 	router.GET("/score", getScore)
+// 	router.GET("/result", getResult)
+
+// 	if err := router.Run(); err != nil {
+// 		log.Fatal("Server Run Failed.: ", err)
+// 	}
+
+// }
+
+// func showRanking(c *gin.Context) {
+// 	// model.GetRanking()をJSONにして返す
+// }
+
+// func getResult(c *gin.Context) {
+// 	user_id := getUserIDforHeader(c)
+// 	score := c.Query("score")
+
+// 	HighScore := model.GetHighScore(user_id)
+
+// 	if score > HighScore {
+// 		model.updateHighScore(userid)
+// 	} else {
+// 		c.JSON(200, gin.H{
+// 			"score": score,
+// 		})
+// 	}
+// 	// model.GetHighScore()
+// 	// 比較
+// 	// ハイスコアならmodel.updateHighScore()
+// 	// じゃないならそのままの値を返す
+// }
+
+// func getScore(c *gin.Context) {
+// 	// model.getScore()
+// 	// 返ってきた値を足し算する
+// }
+// func login(c *gin.Context) {
+// 	username := c.Query("username")
+// 	password := c.Query("password")
+
+// 	// model.searchUser()
+// 	// 存在してたらmodel.createToken()
+// }
+
+// func logout(c *gin.Context) {
+// 	// model.DeleteToken();
+// }
+
+// func signUp(c *gin.Context) {
+// 	username := c.Query("username")
+// 	password := c.Query("password")
+
+// 	// model.searchUserで同じ名前のアカウントがないか確認
+// 	if model.searchUser(username) {
+
+// 		// なければ、model.createUserで新規アカウントをDBに登録
+// 		// トークンを生成
+// 		user := User{userid, username, password}
+// 		model.createUser(user)
+// 	}
+
+// }
+
+// func getUserIDforHeader(c *gin.Context) int {
+// 	claims := c.MustGet("claims").(jwt.MapClaims)
+// 	userID := int(claims["user_id"].(float64)) // ユーザーIDの取得
+// 	return userID
+// }

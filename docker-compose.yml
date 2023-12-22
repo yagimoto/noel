@@ -1,0 +1,33 @@
+version: '3'
+services:
+  go:
+    image: hackdenoel-go
+    container_name: hackdenoel-go
+    build:
+      context: .
+      dockerfile: ./go/dockerfile
+    working_dir: /app/
+    command: /bin/sh -c "go run main.go"
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./go/src:/app/
+    ports:
+      - "8080:8080"
+    depends_on:
+     - mysql
+
+  mysql:
+    image: hackdenoel-mysql
+    container_name: hackdenoel-mysql
+    build:
+      context: .
+      dockerfile: ./mysql/dockerfile
+    expose:
+      - 3300:3300
+    environment:
+      - MYSQL_ROOT_PASSWORD=pass
+      - MYSQL_DATABASE=noel-db
+    volumes:
+      - /mysql/initdb.d /docker-entrypoint-initdb.d/
+    tty: True
