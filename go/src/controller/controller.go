@@ -3,10 +3,13 @@ package controller
 import (
 	"src/model"
 	"fmt"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+
 )
 
-func login(c *gin.Context) {
+func login(c *gin.Context, db *gorm.DB) {
 	var newUser model.User
 
 	c.ShouldBindJSON(&newUser)
@@ -19,7 +22,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	tokenString, err := model.GenerateToken(userID)
+	tokenString, err := GenerateToken(userID)
 	if err != nil{
 		c.JSON(401, gin.H{"error":"トークンの作成に失敗しました"})
 	}
@@ -27,14 +30,14 @@ func login(c *gin.Context) {
 	c.JSON(200, gin.H{"token":tokenString})
 }
 
-func logout(c *gin.Context) {
+func logout(c *gin.Context, db *gorm.DB) {
 	userID := getUserIDforHeader(c)
     model.DeleteToken(userID)
     c.JSON(200, gin.H{"message":"ok"})
 
 }
 
-func signUp(c *gin.Context) {
+func signUp(c *gin.Context, db *gorm.DB) {
 	var newUser model.User
 
 	// リクエストボディからユーザーが入力した情報を取得
@@ -74,7 +77,7 @@ func signUp(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "ユーザーが正常に登録されました"})
 }
 
-func getRanking(c *gin.Context){
+func getRanking(c *gin.Context, db *gorm.DB){
 
 	var ranking model.Ranking
 
@@ -114,7 +117,7 @@ func getRanking(c *gin.Context){
 }
 
 // scoreを返す、ハイスコアが更新されたらtrue
-func getResult(c *gin.Context){
+func getResult(c *gin.Context, db *gorm.DB){
 
 	// 投げられてくる形を定義
 	type jsonScore struct{
@@ -153,7 +156,7 @@ func getResult(c *gin.Context){
 	c.JSON(200, gin.H{"score":userScore.Score, "isUpdateHighScore":false})	
 }
 
-func getScore(c *gin.Context){
+func getScore(c *gin.Context, db *gorm.DB){
 
 	type jsonCity struct {
 		Cities []string `json:"cities"`
@@ -175,7 +178,7 @@ func getScore(c *gin.Context){
 	c.JSON(200, gin.H{"score":result})
 }
 
-func getUserIDforHeader(c *gin.Context) int {
+func getUserIDforHeader(c *gin.Context, db *gorm.DB) int {
 
 	claims := c.MustGet("claims").(jwt.MapClaims)
 	userID := int(claims["user_id"].(float64)) // ユーザーIDの取得
@@ -183,6 +186,21 @@ func getUserIDforHeader(c *gin.Context) int {
 	return userID
 }
 
-func test(c *gin.Context) {
+func test(c *gin.Context, db *gorm.DB) {
 	c.JSON(200, gin.H{"message": "ok"})
+}
+
+func GenerateToken(userID int) (string, error){
+    expirationTime := time.Now().Add(time.Hour * 1).Unix()
+    claims := jwt.MapClaims{
+        "user_id": userID,
+        "exp":     expirationTime, // トークンの有効期限（1時間）
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    // secretKey を使ってトークンを署名
+    signedToken, err := token.SignedString([]byte(secretKey))
+    if err != nil {
+        return "", err
+    }
+    return signedToken, nil
 }
